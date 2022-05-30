@@ -16,9 +16,7 @@ type storage struct {
 func (s *storage) GetTaskList(ctx context.Context) models.TaskList {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	var tasks models.TaskList
-	copy(tasks.Tasks, s.tasks.Tasks)
-	return tasks
+	return s.tasks
 }
 
 func (s *storage) CreateTask(ctx context.Context, task models.Task) models.Task {
@@ -31,7 +29,15 @@ func (s *storage) CreateTask(ctx context.Context, task models.Task) models.Task 
 }
 
 func (s *storage) DeleteTask(ctx context.Context, id string) {
-
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var ft models.TaskList
+	for _, value := range s.tasks.Tasks {
+		if value.Id != id {
+			ft.Tasks = append(ft.Tasks, value)
+		}
+	}
+	s.tasks.Tasks = ft.Tasks
 }
 
 type Storage interface {
